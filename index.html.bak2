@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Olympus Command Board</title>
+  <style>
+    :root {
+      --bg-0: #0b0d12;
+      --bg-1: #121722;
+      --bg-2: #1a2230;
+      --marble: #d8d3c7;
+      --gold-0: #7a5b1c;
+      --gold-1: #b9923b;
+      --gold-2: #f0d98c;
+      --text: #f5f1e6;
+      --muted: #bdb6a5;
+      --ok: #72d572;
+      --warn: #f4bd4f;
+      --danger: #f06d6d;
+      --shadow: 0 12px 28px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(240, 217, 140, 0.12), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(185, 146, 59, 0.14), transparent 28%),
+        linear-gradient(180deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          rgba(255,255,255,0.015),
+          rgba(255,255,255,0.015) 2px,
+          transparent 2px,
+          transparent 8px
+        );
+      mix-blend-mode: soft-light;
+      opacity: .35;
+      z-index: 0;
+    }
+
+    .board {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .title-wrap {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+      letter-spacing: .05em;
+      color: var(--gold-2);
+      text-shadow: 0 0 12px rgba(240,217,140,.25);
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .workflow-line {
+      margin: 14px auto 24px;
+      max-width: 950px;
+      border: 1px solid rgba(240,217,140,.28);
+      border-radius: 999px;
+      background: rgba(13, 17, 25, .45);
+      padding: 10px 16px;
+      color: #e6dcc3;
+      font-size: .9rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      position: relative;
+      padding-top: 6px;
+    }
+
+    .boss-node {
+      justify-self: center;
+      width: min(360px, 94vw);
+      border: 1px solid rgba(240,217,140,.45);
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: linear-gradient(180deg, rgba(35, 40, 52, .88), rgba(20, 24, 33, .92));
+      box-shadow: var(--shadow), 0 0 20px rgba(185,146,59,.16);
+      text-align: center;
+    }
+    .boss-node strong { color: var(--gold-2); }
+
+    .zeus-slot {
+      display: grid;
+      place-items: center;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .advisors {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(170px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .card {
+      position: relative;
+      border: 1px solid rgba(240,217,140,.34);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(160deg, rgba(255,255,255,.04), transparent 45%),
+        linear-gradient(180deg, rgba(32, 40, 55, .95), rgba(17, 22, 31, .96));
+      padding: 14px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
+      overflow: hidden;
+      min-height: 220px;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(circle at top right, rgba(240,217,140,.18), transparent 35%);
+      opacity: .8;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(240,217,140,.62);
+      box-shadow: 0 16px 36px rgba(0,0,0,.55), 0 0 18px rgba(240,217,140,.18);
+    }
+
+    .card.zeus {
+      width: min(430px, 96vw);
+      min-height: 236px;
+      border-width: 1.4px;
+      background:
+        linear-gradient(170deg, rgba(240,217,140,.14), transparent 45%),
+        linear-gradient(180deg, rgba(42, 32, 20, .66), rgba(17, 20, 29, .96));
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .badge {
+      font-size: .74rem;
+      color: #1a1610;
+      background: linear-gradient(180deg, #f0d98c, #b9923b);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+
+    .emoji {
+      font-size: 1.6rem;
+      filter: drop-shadow(0 0 8px rgba(240,217,140,.2));
+    }
+
+    .name {
+      margin: 8px 0 2px;
+      font-size: 1.08rem;
+      color: var(--gold-2);
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .role {
+      margin: 0;
+      font-size: .9rem;
+      color: #ebe2c9;
+      min-height: 2.2em;
+    }
+
+    .persona {
+      margin: 8px 0 10px;
+      font-size: .84rem;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      gap: 7px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat {
+      display: grid;
+      gap: 4px;
+    }
+
+    .stat .label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .73rem;
+      color: #e7ddc3;
+      opacity: .94;
+    }
+
+    .bar {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #8f6f2f, #f0d98c);
+      box-shadow: 0 0 10px rgba(240,217,140,.28);
+    }
+
+    .flow-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+
+    .ticket-panel {
+      margin-top: 18px;
+      border: 1px solid rgba(240,217,140,.26);
+      border-radius: 14px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(18,24,34,.88), rgba(14,18,26,.92));
+      box-shadow: var(--shadow);
+    }
+
+    .ticket-title {
+      margin: 0 0 10px;
+      color: var(--gold-2);
+      font-size: 1rem;
+    }
+
+    .ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 8px;
+      font-size: .84rem;
+    }
+
+    .chip {
+      border: 1px solid rgba(240,217,140,.2);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(255,255,255,.02);
+    }
+
+    .chip b { color: #f2e7c7; }
+
+    .state-flow {
+      margin-top: 10px;
+      color: #d9cfb3;
+      font-size: .85rem;
+      line-height: 1.45;
+    }
+
+    .legend {
+      margin-top: 9px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: .75rem;
+      color: #ddd1b0;
+    }
+
+    .state {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.05);
+    }
+
+    .state.delayed { border-color: rgba(244,189,79,.6); color: #ffd783; }
+    .state.blocked { border-color: rgba(240,109,109,.58); color: #ffb0b0; }
+
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(240,217,140,.48);
+      box-shadow: 0 0 8px rgba(240,217,140,.6);
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      15% { opacity: .9; }
+      85% { opacity: .5; }
+      100% { transform: translateY(-110vh) translateX(30px); opacity: 0; }
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      background: rgba(5,8,14,.64);
+      backdrop-filter: blur(3px);
+      padding: 16px;
+    }
+
+    .modal.open { display: grid; }
+
+    .modal-card {
+      width: min(760px, 95vw);
+      border-radius: 18px;
+      border: 1px solid rgba(240,217,140,.35);
+      background: linear-gradient(180deg, rgba(25,31,43,.98), rgba(14,18,26,.98));
+      box-shadow: 0 22px 48px rgba(0,0,0,.65);
+      overflow: hidden;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(240,217,140,.24);
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      color: var(--gold-2);
+    }
+
+    .close-btn {
+      border: 0;
+      background: rgba(255,255,255,.06);
+      color: #f4e8c8;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+      color: #efe7d1;
+      font-size: .92rem;
+      line-height: 1.55;
+    }
+
+    .modal-body .meta {
+      color: #cfc3a0;
+      font-size: .86rem;
+    }
+
+    @media (max-width: 1100px) {
+      .advisors { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+      .ticket-grid { grid-template-columns: repeat(3, minmax(130px,1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .board { padding: 20px 12px 28px; }
+      .advisors { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+      .ticket-grid { grid-template-columns: repeat(2, minmax(120px,1fr)); }
+      .card { min-height: 208px; }
+    }
+
+    @media (max-width: 520px) {
+      .advisors { grid-template-columns: 1fr; }
+      .ticket-grid { grid-template-columns: 1fr; }
+      .workflow-line { text-align: left; font-size: .83rem; }
+      .card.zeus { min-height: 224px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <main class="board">
+    <section class="title-wrap">
+      <h1>🏛️ OLYMPUS COMMAND BOARD</h1>
+      <div class="subtitle">RPG 기반 올림푸스 운영 구조 · 실제 역할/규칙 반영</div>
+    </section>
+
+    <div class="workflow-line">
+      Boss(사용자) → Zeus(접수/분해) → <b>sessions_spawn</b> → Athena/Hephaestus/Prometheus/Sisyphus/Hades(병렬) → Zeus 종합 → Boss 보고
+    </div>
+
+    <section class="layout" id="layoutRoot">
+      <svg class="flow-svg" id="flowSvg" viewBox="0 0 1200 700" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <marker id="arrowGold" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#f0d98c"></path>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2.2" result="blur"></feGaussianBlur>
+            <feMerge>
+              <feMergeNode in="blur"></feMergeNode>
+              <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
+
+      <article class="boss-node" id="bossNode">
+        <strong>👤 Boss (사용자)</strong><br>
+        요청 생성 / 의사결정 / 최종 승인
+      </article>
+
+      <div class="zeus-slot">
+        <article class="card zeus agent-card" data-agent="zeus" id="zeusCard">
+          <div class="top-row">
+            <span class="badge">THRONE · CEO</span>
+            <span class="emoji">⚡</span>
+          </div>
+          <h2 class="name">Zeus</h2>
+          <p class="role">총괄 오케스트레이터 · Boss 요청 1차 수신/분해/위임/종합 보고</p>
+          <p class="persona">냉철하고 명확한 총괄자 · 직접 실무 없음</p>
+          <div class="stats">
+            <div class="stat"><div class="label"><span>Orchestration</span><span>100</span></div><div class="bar"><span style="width:100%"></span></div></div>
+            <div class="stat"><div class="label"><span>Delegation</span><span>98</span></div><div class="bar"><span style="width:98%"></span></div></div>
+            <div class="stat"><div class="label"><span>Parallel Control</span><span>96</span></div><div class="bar"><span style="width:96%"></span></div></div>
+          </div>
+        </article>
+      </div>
+
+      <section class="advisors" id="advisorsRow">
+        <article class="card agent-card" data-agent="athena">
+          <div class="top-row"><span class="badge">STRATEGY</span><span class="emoji">🦉</span></div>
+          <h3 class="name">Athena</h3>
+          <p class="role">전략/시장/경쟁 분석, 근거 기반 브리핑</p>
+          <p class="persona">차분하고 분석적</p>
+          <div class="stats">
+            <div class="stat"><div class="label"><span>Insight</span><span>94</span></div><div class="bar"><span style="width:94%"></span></div></div>
+            <div class="stat"><div class="label"><span>Evidence</span><span>96</span></div><div class="bar"><span style="width:96%"></span></div></div>
+            <div class="stat"><div class="label"><span>Clarity</span><span>90</span></div><div class="bar"><span style="width:90%"></span></div></div>
+          </div>
+        </article>
+
+        <article class="card agent-card" data-agent="hephaestus">
+          <div class="top-row"><span class="badge">DEV/AUTOMATION</span><span class="emoji">🔨</span></div>
+          <h3 class="name">Hephaestus</h3>
+          <p class="role">개발/자동화/기술 타당성 판단 및 구현</p>
+          <p class="persona">실용적 · 기술 정확성 우선</p>
+          <div class="stats">
+            <div class="stat"><div class="label"><span>Implementation</span><span>97</span></div><div class="bar"><span style="width:97%"></span></div></div>
+            <div class="stat"><div class="label"><span>Feasibility</span><span>95</span></div><div class="bar"><span style="width:95%"></span></div></div>
+            <div class="stat"><div class="label"><span>Precision</span><span>98</span></div><div class="bar"><span style="width:98%"></span></div></div>
+          </div>
+        </article>
+
+        <article class="card agent-card" data-agent="prometheus">
+          <div class="top-row"><span class="badge">DATA/SIGNAL</span><span class="emoji">🔥</span></div>
+          <h3 class="name">Prometheus</h3>
+          <p class="role">데이터 수집/신호 감지/사실 기반 리포트</p>
+          <p class="persona">객관적이고 정밀한 데이터 리포터</p>
+          <div class="stats">
+            <div class="stat"><div class="label"><span>Collection</span><span>95</span></div><div class="bar"><span style="width:95%"></span></div></div>
+            <div class="stat"><div class="label"><span>Signal Detection</span><span>93</span></div><div class="bar"><span style="width:93%"></span></div></div>
+            <div class="stat"><div class="label"><span>Objectivity</span><span>99</span></div><div class="bar"><span style="width:99%"></span></div></div>
+          </div>
+        </article>
+
+        <article class="card agent-card" data-agent="sisyphus">
+          <div class="top-row"><span class="badge">OPS/MONITORING</span><span class="emoji">🪨</span></div>
+          <h3 class="name">Sisyphus</h3>
+          <p class="role">운영 점검/누락 감시/지연 알림, 티켓 모니터링</p>
+          <p class="persona">묵묵하고 시스템적</p>
+          <div class="stats">
+            <div class="stat"><div class="label"><span>Monitoring</span><span>97</span></div><div class="bar"><span style="width:97%"></span></div></div>
+            <div class="stat"><div class="label"><span>Persistence</span><span>99</span></div><div class="bar"><span style="width:99%"></span></div></div>
+            <div class="stat"><div class="label"><span>Alert Discipline</span><span>94</span></div><div class="bar"><span style="width:94%"></span></div></div>
+          </div>
+        </article>
+
+        <article class="card agent-card" data-agent="hades">
+          <div class="top-row"><span class="badge">ARCHIVE</span><span class="emoji">💀</span></div>
+          <h3 class="name">Hades</h3>
+          <p class="role">완료/중단 작업 아카이브, 교훈 문서화</p>
+          <p class="persona">담담하고 구조화된 정리자</p>
+          <div class="stats">
+            <div class="stat"><div class="label"><span>Archiving</span><span>98</span></div><div class="bar"><span style="width:98%"></span></div></div>
+            <div class="stat"><div class="label"><span>Structure</span><span>96</span></div><div class="bar"><span style="width:96%"></span></div></div>
+            <div class="stat"><div class="label"><span>Boundary Guard</span><span>95</span></div><div class="bar"><span style="width:95%"></span></div></div>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section class="ticket-panel">
+      <h3 class="ticket-title">🎫 Ticket System (실제 규칙)</h3>
+      <div class="ticket-grid">
+        <div class="chip"><b>ID 규칙</b><br>T-YYYYMMDD-NNN</div>
+        <div class="chip"><b>상태 1</b><br>QUEUED → RUNNING</div>
+        <div class="chip"><b>상태 2</b><br>RUNNING → DONE</div>
+        <div class="chip"><b>예외</b><br>30분 초과 시 DELAYED</div>
+        <div class="chip"><b>차단</b><br>정보부족 시 BLOCKED</div>
+      </div>
+      <div class="state-flow">
+        상태 전이: <b>QUEUED → RUNNING → DONE | DELAYED(30분 초과) | BLOCKED(정보부족)</b><br>
+        모든 티켓에는 <b>담당 에이전트 실명</b>을 반드시 명시.
+      </div>
+      <div class="legend">
+        <span class="state">QUEUED</span>
+        <span class="state">RUNNING</span>
+        <span class="state">DONE</span>
+        <span class="state delayed">DELAYED</span>
+        <span class="state blocked">BLOCKED</span>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="agentModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle">Agent Detail</h3>
+        <button class="close-btn" id="closeModal" type="button">닫기 ✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const agentDetails = {
+      zeus: {
+        title: "Zeus ⚡ — CEO/총괄 오케스트레이터",
+        role: "Boss 요청 1차 수신, 작업 분해, 참모 위임(sessions_spawn), 종합 보고",
+        personality: "냉철하고 명확한 총괄자",
+        rules: [
+          "직접 실무를 수행하지 않음",
+          "분해/위임/병렬 조정에 집중",
+          "참모 결과를 종합해 Boss에게 보고"
+        ],
+        extra: "워크플로우 허브: Boss → Zeus → sessions_spawn → 참모 병렬 위임"
+      },
+      athena: {
+        title: "Athena 🦉 — 전략/리서치",
+        role: "전략/시장/경쟁 분석, 근거 기반 브리핑",
+        personality: "차분하고 분석적",
+        rules: [
+          "출력 포맷 고정: 요약 1줄 → 핵심 근거 3개 → 권고안 A/B → 불확실성",
+          "주장보다 근거 우선",
+          "전략적 선택지를 비교 가능한 형태로 제시"
+        ],
+        extra: "Zeus가 분해한 전략 과제를 담당"
+      },
+      hephaestus: {
+        title: "Hephaestus 🔨 — 개발/자동화",
+        role: "개발/자동화/기술 타당성 판단, 구현",
+        personality: "실용적, 기술 정확성 우선",
+        rules: [
+          "난이도 4단계: LOW / MED / HIGH / EXTREME",
+          "기술 타당성과 구현 가능성 명확화",
+          "추측 없이 정확성 중심으로 구현"
+        ],
+        extra: "실행 가능한 솔루션 제작 및 자동화 담당"
+      },
+      prometheus: {
+        title: "Prometheus 🔥 — 데이터/신호",
+        role: "데이터 수집/신호 감지/사실 기반 리포트",
+        personality: "객관적, 정밀한 데이터 리포터",
+        rules: [
+          "원칙: 해석보다 관측 우선",
+          "수치/신호/근거를 분리해 보고",
+          "가설 과잉 확장 금지"
+        ],
+        extra: "판단 이전의 사실 레이어를 제공"
+      },
+      sisyphus: {
+        title: "Sisyphus 🪨 — 운영/점검",
+        role: "운영 점검/누락 감시/지연 알림, 티켓 모니터링",
+        personality: "묵묵하고 시스템적",
+        rules: [
+          "RUNNING 30분 초과 시 DELAYED 경보",
+          "누락 태스크 탐지 및 경고",
+          "상태 전이 일관성 감시"
+        ],
+        extra: "운영 안정성 및 지연 리스크 감시 전담"
+      },
+      hades: {
+        title: "Hades 💀 — 아카이브",
+        role: "완료/중단 작업 아카이브, 교훈 문서화",
+        personality: "담담하고 구조화된 정리자",
+        rules: [
+          "진행중 태스크 개입 금지",
+          "완료/중단 건만 아카이브",
+          "교훈을 재사용 가능한 문서로 정리"
+        ],
+        extra: "시스템 기억체계 유지 및 재발 방지 지원"
+      }
+    };
+
+    const modal = document.getElementById('agentModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+
+    document.querySelectorAll('.agent-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const key = card.dataset.agent;
+        const info = agentDetails[key];
+        if (!info) return;
+        modalTitle.textContent = info.title;
+        modalBody.innerHTML = `
+          <div><strong>역할:</strong> ${info.role}</div>
+          <div><strong>성격:</strong> ${info.personality}</div>
+          <div><strong>규칙:</strong><ul>${info.rules.map(r => `<li>${r}</li>`).join('')}</ul></div>
+          <div class="meta">${info.extra}</div>
+        `;
+        modal.classList.add('open');
+      });
+    });
+
+    document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
+
+    function createParticles() {
+      const wrap = document.getElementById('particles');
+      const count = Math.min(38, Math.floor(window.innerWidth / 36));
+      wrap.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('span');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.bottom = (-10 - Math.random() * 40) + 'px';
+        p.style.animationDuration = (7 + Math.random() * 10).toFixed(2) + 's';
+        p.style.animationDelay = (-Math.random() * 12).toFixed(2) + 's';
+        p.style.opacity = (0.2 + Math.random() * 0.8).toFixed(2);
+        wrap.appendChild(p);
+      }
+    }
+
+    function drawFlows() {
+      const svg = document.getElementById('flowSvg');
+      const root = document.getElementById('layoutRoot');
+      const boss = document.getElementById('bossNode');
+      const zeus = document.getElementById('zeusCard');
+      const advisors = [...document.querySelectorAll('#advisorsRow .agent-card')];
+      const rb = root.getBoundingClientRect();
+
+      const toLocal = (el, atBottom = false) => {
+        const b = el.getBoundingClientRect();
+        return {
+          x: b.left - rb.left + b.width / 2,
+          y: b.top - rb.top + (atBottom ? b.height : 0)
+        };
+      };
+
+      const bossP = toLocal(boss, true);
+      const zeusTop = toLocal(zeus, false);
+      const zeusBottom = toLocal(zeus, true);
+
+      svg.setAttribute('viewBox', `0 0 ${Math.max(1200, rb.width)} ${Math.max(700, rb.height + 30)}`);
+
+      const line = (d, dashed = false) => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', '#f0d98c');
+        p.setAttribute('stroke-opacity', dashed ? '.7' : '.85');
+        p.setAttribute('stroke-width', dashed ? '1.6' : '2');
+        if (dashed) p.setAttribute('stroke-dasharray', '6 6');
+        p.setAttribute('marker-end', 'url(#arrowGold)');
+        p.setAttribute('filter', 'url(#glow)');
+        return p;
+      };
+
+      svg.querySelectorAll('path.flow').forEach(n => n.remove());
+
+      const p1 = line(`M ${bossP.x} ${bossP.y} C ${bossP.x} ${bossP.y + 55}, ${zeusTop.x} ${zeusTop.y - 55}, ${zeusTop.x} ${zeusTop.y}`);
+      p1.classList.add('flow');
+      svg.appendChild(p1);
+
+      advisors.forEach(card => {
+        const p = toLocal(card, false);
+        const ctrlY = (zeusBottom.y + p.y) / 2;
+        const d = `M ${zeusBottom.x} ${zeusBottom.y} C ${zeusBottom.x} ${ctrlY - 30}, ${p.x} ${ctrlY + 20}, ${p.x} ${p.y}`;
+        const branch = line(d, true);
+        branch.classList.add('flow');
+        svg.appendChild(branch);
+      });
+    }
+
+    createParticles();
+    drawFlows();
+
+    let rs;
+    window.addEventListener('resize', () => {
+      clearTimeout(rs);
+      rs = setTimeout(() => {
+        createParticles();
+        drawFlows();
+      }, 120);
+    });
+  </script>
+</body>
+</html>
