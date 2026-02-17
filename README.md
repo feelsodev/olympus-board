@@ -10,7 +10,7 @@ An interactive game board that visualizes an AI agent collaboration system in RP
 |---------|-------------|
 | **RPG Game Board Layout** | Spatial hierarchy with 8 gods orbiting the Olympus temple |
 | **Character Portraits** | Unique PNG portraits with per-agent color themes |
-| **Workflow Simulation** | Animated particle flows: Boss → Zeus → parallel dispatch → cycle |
+| **Workflow Simulation** | Animated particle flows: Owner → Zeus → parallel dispatch → cycle |
 | **Click Modal** | Detailed view with role, persona, stats, rules, and AI mapping |
 | **SVG Connections** | Animated dash-pattern lines between temple and agents |
 | **Stat Bars** | 3 ability bars per character with unique color gradients |
@@ -22,7 +22,7 @@ An interactive game board that visualizes an AI agent collaboration system in RP
 ## Agents
 
 ```
-                    [BOSS]
+                    [OWNER]
                       │
                    [ZEUS]          ← Conductor
                   ╱       ╲

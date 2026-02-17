@@ -752,8 +752,8 @@ body::before {
 </header>
 
 <div class="boss-node">
-  <div>BOSS (사용자)</div>
-  <div class="label">요청 생성 · 의사결정 · 최종 승인</div>
+<div>OWNER (사용자)</div>
+<div class="label">요청 생성 · 의사결정 · 최종 승인</div>
 </div>
 
 <div class="boss-connector"><div class="line"></div></div>
@@ -989,7 +989,7 @@ const AGENTS = {
     badge: "THRONE · CONDUCTOR",
     img: "assets/characters/zeus.png",
     color: "#FFD700",
-    role: "총괄 오케스트레이터 — Boss의 요청을 1차 수신하고, 작업을 분해하여 참모에게 위임한 뒤 결과를 종합 보고합니다.",
+    role: "총괄 오케스트레이터 — Owner의 요청을 1차 수신하고, 작업을 분해하여 참모에게 위임한 뒤 결과를 종합 보고합니다.",
     persona: "냉철하고 명확한 총괄자. 직접 실무를 수행하지 않으며, 분해·위임·병렬 조정에 집중합니다.",
     stats: [
       { label: "Orchestration", value: 100 },
@@ -998,10 +998,10 @@ const AGENTS = {
     ],
     rules: [
       "직접 실무를 수행하지 않음 — 분해/위임/병렬 조정에만 집중",
-      "참모 결과를 종합하여 Boss에게 보고",
+      "참모 결과를 종합하여 Owner에게 보고",
       "모든 요청을 원자적 작업 단위로 분해 후 위임"
     ],
-    ai: "Main Orchestrator (Sisyphus Conductor) — Boss 요청의 1차 진입점이자 전체 워크플로우 허브"
+    ai: "Main Orchestrator (Sisyphus Conductor) — Owner 요청의 1차 진입점이자 전체 워크플로우 허브"
   },
   athena: {
     name: "Athena",
